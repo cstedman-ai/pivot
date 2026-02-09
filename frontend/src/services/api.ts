@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AnalysisResult } from '../types';
+import { AnalysisResult, ResumeData, ExportFormat } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -77,3 +77,38 @@ export const checkHealth = async (): Promise<{ status: string; message: string }
   return response.data;
 };
 
+// Parse resume to structured data
+export const parseResume = async (file: File): Promise<ResumeData> => {
+  const formData = new FormData();
+  formData.append('resume', file);
+
+  const response = await axios.post<{ success: boolean; data: ResumeData }>(
+    `${API_BASE_URL}/resume/parse`,
+    formData
+  );
+
+  return response.data.data;
+};
+
+// Export resume in various formats
+export const exportResume = async (resumeData: ResumeData, format: ExportFormat): Promise<Blob> => {
+  const response = await axios.post(
+    `${API_BASE_URL}/resume/export`,
+    { resumeData, format },
+    { responseType: 'blob' }
+  );
+
+  return response.data;
+};
+
+// Download helper
+export const downloadBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
